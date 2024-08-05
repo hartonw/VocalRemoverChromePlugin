@@ -7,45 +7,42 @@ chrome.offscreen.createDocument({
 
 let currentTab = -1;
 
-async function startRequestLoop(id) {
-
-    if (id == currentTab) {
+async function startRequestLoop(tabId) {
+    // Prevent processing the same tab multiple times
+    if (tabId == currentTab) {
         return;
     }
-
-    currentTab = id;
-    let promise = Promise.resolve();
-    let suc;
+    // Set the current tab to the provided tabId
+    currentTab = tabId;
 
     while (true) {
-        promise = new Promise((s) => {
-            suc = s;
-        })
-        chrome.tabs.sendMessage(id, { type: "request", payload: null }, (responseFromContent) => {
-            suc(responseFromContent)
+        // Create a promise to wait for a response
+        const responsePromise = new Promise(resolve => {
+            chrome.tabs.sendMessage(tabId, { type: "request", payload: null }, resolve);
         });
-        if (currentTab != id) {
+        // Check if the tab is still the current tab
+        if (currentTab != tabId) {
             return;
         }
-        let result = await promise;
+        // Wait for the response
+        let result = await responsePromise;
+
+        // Process the response if it's not null
         if (result != null) {
-            process(result);
+            chrome.runtime.sendMessage({ type: "inputBuffer", payload: [result[0], result[1]] });
         }
     }
-
-}
-
-function process(data) {
-    chrome.runtime.sendMessage({ type: "inputBuffer", payload: [data[0], data[1]] });
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    // Received when user click execute and content script is done with the set up
     if (message.type == "tabId") {
         if (currentTab != -1 && message.payload != currentTab) {
             chrome.tabs.sendMessage(currentTab, { type: "stop", payload: message.payload });
         }
         startRequestLoop(message.payload);
     } else if (message.type == "outputBuffer") {
+        // Sending to content script for the bugger. 
         chrome.tabs.sendMessage(currentTab, { type: "buffer", payload: message.payload });
     } else if (message.type == "stop") {
         chrome.tabs.sendMessage(currentTab, { type: "stop", payload: message.payload });

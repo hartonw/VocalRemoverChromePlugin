@@ -1,5 +1,5 @@
 {
-    "name": "Wakapippi Vocal Remover Extension",
+    "name": "Test",
     "description": "A realtime vocal remover using ML models.",
     "version": "0.1",
     "manifest_version": 3,
