@@ -3,9 +3,12 @@
     "description": "A realtime vocal remover using ML models.",
     "version": "0.1",
     "manifest_version": 3,
+    "web_accessible_resources": [{
+        "resources": ["random.js"],
+        "matches": ["<all_urls>"]
+    }],
     "content_scripts": [{
         "matches": [
-            "http://*/*",
             "https://*/*"
         ],
         "js": [
@@ -13,8 +16,7 @@
         ],
         "resources": [
             "models/*",
-            "sandbox.html",
-            "random.js"
+            "sandbox.html"
         ]
     }],
     "permissions": [

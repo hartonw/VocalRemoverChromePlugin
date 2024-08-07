@@ -34,9 +34,10 @@ async function startRequestLoop(tabId) {
     }
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message) => {
     // Received when user click execute and content script is done with the set up
     if (message.type == "tabId") {
+        // if the current tab change to a new active tab
         if (currentTab != -1 && message.payload != currentTab) {
             chrome.tabs.sendMessage(currentTab, { type: "stop", payload: message.payload });
         }

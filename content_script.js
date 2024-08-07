@@ -3,7 +3,27 @@ let bufferR = [];
 
 let audioContext = new(window.AudioContext || window.webkitAudioContext)();
 audioContext.sampleRate = 44100;
-// const processorURL = chrome.runtime.getURL('random.js');
+const processorURL = chrome.runtime.getURL('random.js');
+
+// const worklet = URL.createObjectURL(
+//     new Blob(
+//         [
+//             class RandomNoiseProcessor extends AudioWorkletProcessor {
+//                 process(inputs, outputs, parameters) {
+//                     const output = outputs[0];
+//                     output.forEach((channel) => {
+//                         for (let i = 0; i < channel.length; i++) {
+//                             channel[i] = Math.random() * 2 - 1;
+//                         }
+//                     });
+//                     console.log("random noiseing ")
+//                     return true;
+//                 }
+//             },
+//             registerProcessor("random", RandomNoiseProcessor),
+//         ], { type: 'text/javascript' }
+//     )
+// );
 
 let bufferQueue = [];
 let stopped = false;
@@ -38,23 +58,22 @@ chrome.runtime.onMessage.addListener((mes, _ev, sendResponse) => {
         bufferR = bufferR.concat(mes.payload[1]);
         sendResponse();
     }
-    // ポップアップにメッセージを返す
-
 });
 
 
 async function startHookVideo(target) {
     let source = audioContext.createMediaElementSource(target);
-    // audioContext.audioWorklet.addModule(processorURL).then(() => {
-    //     const randomNoiseNode = new AudioWorkletNode(
-    //         audioContext,
-    //         "random",
-    //     );
-    //     source.connect(randomNoiseNode);
-    //     randomNoiseNode.connect(audioContext.destination);
-    // }).catch((err) => {
-    //     console.error(`Error adding module: name, ${err.name}, message: ${err.message}, code: ${err.code}`);
-    // });
+    audioContext.audioWorklet.addModule(processorURL).then(() => {
+        console.log("successfully loading the module")
+        const randomNoiseNode = new AudioWorkletNode(
+            audioContext,
+            "random",
+        );
+        source.connect(randomNoiseNode);
+        randomNoiseNode.connect(audioContext.destination);
+    }).catch((err) => {
+        console.error(`Error adding module: name, ${err.name}, message: ${err.message}, code: ${err.code}`);
+    });
 
     let scriptNode = audioContext.createScriptProcessor(1024, source.channelCount, source.channelCount);
     scriptNode.addEventListener("audioprocess", processAudio);
