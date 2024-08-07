@@ -1,79 +1,55 @@
 ﻿let bufferL = [];
 let bufferR = [];
 
-let audioContext = new(window.AudioContext || window.webkitAudioContext)();
-audioContext.sampleRate = 44100;
 const processorURL = chrome.runtime.getURL('random.js');
-
-// const worklet = URL.createObjectURL(
-//     new Blob(
-//         [
-//             class RandomNoiseProcessor extends AudioWorkletProcessor {
-//                 process(inputs, outputs, parameters) {
-//                     const output = outputs[0];
-//                     output.forEach((channel) => {
-//                         for (let i = 0; i < channel.length; i++) {
-//                             channel[i] = Math.random() * 2 - 1;
-//                         }
-//                     });
-//                     console.log("random noiseing ")
-//                     return true;
-//                 }
-//             },
-//             registerProcessor("random", RandomNoiseProcessor),
-//         ], { type: 'text/javascript' }
-//     )
-// );
 
 let bufferQueue = [];
 let stopped = false;
 
-chrome.runtime.onMessage.addListener((mes, _ev, sendResponse) => {
-
-    if (mes.type == "stop") {
-        stopped = true;
-        sendResponse();
-    } else if (mes.type == "start") {
-
-        stopped = false;
-
-        let video = document.querySelector("video");
-        startHookVideo(video);
-
-        bufferQueue = [];
-        bufferL = [];
-        bufferR = [];
-
-        sendResponse("ok");
-
-    } else if (mes.type == "request") {
-        if (bufferQueue.length == 0) {
+chrome.runtime.onMessage.addListener(async(message, sender, sendResponse) => {
+    switch (message.type) {
+        case "stop":
+            stopped = true;
             sendResponse();
-        } else {
-            sendResponse(bufferQueue.shift());
-        }
-    } else if (mes.type == "buffer") {
+            break;
+        case "start":
+            stopped = false;
+            let video = document.querySelector("video");
+            startHookVideo(video);
 
-        bufferL = bufferL.concat(mes.payload[0]);
-        bufferR = bufferR.concat(mes.payload[1]);
-        sendResponse();
+            bufferQueue = [];
+            bufferL = [];
+            bufferR = [];
+
+            sendResponse("ok");
+            break;
+        case "request":
+            if (bufferQueue.length == 0) {
+                sendResponse();
+            } else {
+                sendResponse(bufferQueue.shift());
+            }
+            break;
+        case "buffer":
+            bufferL = bufferL.concat(message.payload[0]);
+            bufferR = bufferR.concat(message.payload[1]);
+            sendResponse();
+            break;
+        default:
     }
 });
 
-
 async function startHookVideo(target) {
+    let audioContext = new(window.AudioContext || window.webkitAudioContext)();
+    audioContext.sampleRate = 44100;
     let source = audioContext.createMediaElementSource(target);
-    audioContext.audioWorklet.addModule(processorURL).then(() => {
-        console.log("successfully loading the module")
-        const randomNoiseNode = new AudioWorkletNode(
-            audioContext,
-            "random",
-        );
-        source.connect(randomNoiseNode);
-        randomNoiseNode.connect(audioContext.destination);
-    }).catch((err) => {
-        console.error(`Error adding module: name, ${err.name}, message: ${err.message}, code: ${err.code}`);
-    });
+    await audioContext.audioWorklet.addModule(processorURL);
+    const randomNoiseNode = new AudioWorkletNode(
+        audioContext,
+        "random",
+    );
+    source.connect(randomNoiseNode);
+    randomNoiseNode.connect(audioContext.destination);
 
     let scriptNode = audioContext.createScriptProcessor(1024, source.channelCount, source.channelCount);
     scriptNode.addEventListener("audioprocess", processAudio);
