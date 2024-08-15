@@ -39,11 +39,12 @@ chrome.runtime.onMessage.addListener((message) => {
     if (message.type == "tabId") {
         // if the current tab change to a new active tab
         if (currentTab != -1 && message.payload != currentTab) {
+            // the payload here is current active tab id
             chrome.tabs.sendMessage(currentTab, { type: "stop", payload: message.payload });
         }
         startRequestLoop(message.payload);
     } else if (message.type == "outputBuffer") {
-        // Sending to content script for the bugger. 
+        // Sending to content script for the 
         chrome.tabs.sendMessage(currentTab, { type: "buffer", payload: message.payload });
     } else if (message.type == "stop") {
         chrome.tabs.sendMessage(currentTab, { type: "stop", payload: message.payload });

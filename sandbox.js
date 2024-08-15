@@ -10,8 +10,6 @@ let writeBuffer1 = [];
 let source;
 let origin;
 
-// const processorURL = chrome.runtime.getURL('random.js');
-
 window.addEventListener("message", async(event) => {
 
     if (event.data.type == "buffer") {
@@ -50,17 +48,6 @@ async function waitMs(ms) {
 
 
 async function runModel() {
-    // let audioContext = new(window.AudioContext || window.webkitAudioContext)();
-    // audioContext.sampleRate = 44100;
-    // audioContext.audioWorklet.addModule(processorURL).then(() => {
-    //     const randomNoiseNode = new AudioWorkletNode(
-    //         audioContext,
-    //         "random",
-    //     );
-    //     console.log("module added successfully")
-    // }).catch((err) => {
-    //     console.error(`Error adding module: name, ${err.name}, message: ${err.message}, code: ${err.code}`);
-    // });
     tf.engine().startScope()
 
     if (buffer0.length < 31744) {
