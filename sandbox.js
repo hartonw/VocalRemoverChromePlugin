@@ -11,7 +11,7 @@ let source;
 let origin;
 
 window.addEventListener("message", async(event) => {
-
+    console.log("sandbox received message")
     if (event.data.type == "buffer") {
         let signal = event.data.payload;
         buffer0 = buffer0.concat(signal[0]);

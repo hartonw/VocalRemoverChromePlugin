@@ -1,120 +1,81 @@
-﻿let bufferL = [];
-let bufferR = [];
+﻿let audioWorkletNode;
+let currentTab = -1;
 
-const processorURL = chrome.runtime.getURL('random.js');
+async function startRequestLoop(tabId) {
+    // Prevent processing the same tab multiple times
+    if (tabId == currentTab) {
+        return;
+    }
+    // Set the current tab to the provided tabId
+    currentTab = tabId;
+    setInterval(() => audioWorkletNode.port.postMessage({ type: "request" }), 1000);
+    audioWorkletNode.port.onmessage = (event) => {
+        // Relay the buffered audio signal from audio processor to sand box
+        console.log("content script received ");
+        if (currentTab != tabId) {
+            return;
+        }
+        if (event.data) chrome.runtime.sendMessage({ type: "inputBuffer", payload: [event.data[0], event.data[1]] });
+    }
 
-let bufferQueue = [];
-let stopped = false;
+    // while (true) {
+    //     // Create a promise to wait for a response
+    //     audioWorkletNode.port.postMessage({ type: "request" })
+    //     audioWorkletNode.port.onmessage = (event) => {
+    //         // Relay the buffered audio signal from audio processor to sand box
+    //         console.log(event.data);
+    //         if (currentTab != tabId) {
+    //             return;
+    //         }
+    //         if (event.data) chrome.runtime.sendMessage({ type: "inputBuffer", payload: [event.data[0], event.data[1]] });
+    //     }
+    // }
+}
 
 chrome.runtime.onMessage.addListener(async(message, sender, sendResponse) => {
+    console.log(message.type)
     switch (message.type) {
         case "stop":
-            stopped = true;
+            if (audioWorkletNode) audioWorkletNode.port.postMessage(message);
+            sendResponse();
+            currentTab = -1;
+        case "outputBuffer":
+            if (audioWorkletNode) audioWorkletNode.port.postMessage(message);
             sendResponse();
             break;
         case "start":
-            stopped = false;
-            let video = document.querySelector("video");
-            startHookVideo(video);
-
-            bufferQueue = [];
-            bufferL = [];
-            bufferR = [];
-
-            sendResponse("ok");
-            break;
-        case "request":
-            if (bufferQueue.length == 0) {
-                sendResponse();
-            } else {
-                sendResponse(bufferQueue.shift());
-            }
-            break;
-        case "buffer":
-            bufferL = bufferL.concat(message.payload[0]);
-            bufferR = bufferR.concat(message.payload[1]);
+            // This has be in the first line of the break statement before the following async process
             sendResponse();
+            // if the current tab change to a new active tab
+            if (currentTab != -1 && message.payload != currentTab) {
+                // the payload here is current active tab id
+                chrome.tabs.sendMessage(currentTab, { type: "stop", payload: message.payload });
+            }
+            if (audioWorkletNode) {
+                return;
+            }
+            // Get the video source from DOM tree
+            const video = document.querySelector("video");
+
+            // Create Web Audio API's audio source 
+            const audioContext = new(window.AudioContext || window.webkitAudioContext)();
+            const source = audioContext.createMediaElementSource(video);
+
+            // Create Audio Worklet node to process the audio
+            const processorURL = chrome.runtime.getURL('random.js');
+            audioContext.sampleRate = 44100;
+            await audioContext.audioWorklet.addModule(processorURL);
+            audioWorkletNode = new AudioWorkletNode(
+                audioContext,
+                "random"
+            );
+
+            // Connect the web audio api's audio source with the audio processing node
+            source.connect(audioWorkletNode);
+            audioWorkletNode.connect(audioContext.destination);
+            audioWorkletNode.port.postMessage(message);
+            startRequestLoop(message.payload);
             break;
-        default:
+
     }
 });
-
-async function startHookVideo(target) {
-    let audioContext = new(window.AudioContext || window.webkitAudioContext)();
-    audioContext.sampleRate = 44100;
-    let source = audioContext.createMediaElementSource(target);
-    await audioContext.audioWorklet.addModule(processorURL);
-    const randomNoiseNode = new AudioWorkletNode(
-        audioContext,
-        "random",
-    );
-    source.connect(randomNoiseNode);
-    randomNoiseNode.connect(audioContext.destination);
-
-    let scriptNode = audioContext.createScriptProcessor(1024, source.channelCount, source.channelCount);
-    scriptNode.addEventListener("audioprocess", processAudio);
-
-    source.connect(scriptNode);
-    scriptNode.connect(audioContext.destination);
-
-}
-
-
-function processAudio(audioProcessingEvent) {
-    // The input buffer is the song we loaded earlier
-    let inputBuffer = audioProcessingEvent.inputBuffer;
-
-    let l = Array.from(inputBuffer.getChannelData(0));
-    let r;
-
-    if (inputBuffer.numberOfChannels == 2) {
-        r = Array.from(inputBuffer.getChannelData(1));
-    } else {
-        r = l;
-    }
-
-    let result = [l, r];
-
-    bufferQueue.push(result);
-
-    // The output buffer contains the samples that will be modified and played
-    let outputBuffer = audioProcessingEvent.outputBuffer;
-
-    // Loop through the output channels (in this case there is only one)
-    for (let channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
-
-        let inputData = inputBuffer.getChannelData(channel);
-        let outputData = outputBuffer.getChannelData(channel);
-
-        if (stopped) {
-
-            for (let sample = 0; sample < outputData.length; sample++) {
-
-                outputData[sample] = inputData[sample];
-            }
-
-            continue;
-        }
-
-        let target = null;
-        if (channel == 0) {
-            target = bufferL;
-        }
-        if (channel == 1) {
-            target = bufferR;
-        }
-
-        if (target != null && target.length >= outputData.length) {
-
-            for (let sample = 0; sample < outputData.length; sample++) {
-
-                outputData[sample] = target[sample];
-            }
-
-            target.splice(0, outputData.length);
-
-        } else {
-            console.warn("buffer underflow")
-        }
-    }
-}

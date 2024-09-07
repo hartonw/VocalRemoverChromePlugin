@@ -7,6 +7,7 @@ window.addEventListener("message", (event) => {
 chrome.runtime.onMessage.addListener((message) => {
     if (message.type == "inputBuffer") {
         // send message to sandbox.
+        console.log(message.type);
         document.getElementById("sandbox").contentWindow.postMessage({ type: "buffer", payload: [message.payload[0], message.payload[1]] }, "*");
     } else if (message.type == "stop") {
         location.reload();
