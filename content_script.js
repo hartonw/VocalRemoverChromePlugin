@@ -1,5 +1,6 @@
 ﻿let audioWorkletNode;
 let currentTab = -1;
+let requestLoop;
 
 async function startRequestLoop(tabId) {
     // Prevent processing the same tab multiple times
@@ -8,7 +9,8 @@ async function startRequestLoop(tabId) {
     }
     // Set the current tab to the provided tabId
     currentTab = tabId;
-    setInterval(() => audioWorkletNode.port.postMessage({ type: "request" }), 1000);
+    requestLoop = setInterval(() => audioWorkletNode.port.postMessage({ type: "request" }), 10);
+
     audioWorkletNode.port.onmessage = (event) => {
         // Relay the buffered audio signal from audio processor to sand box
         console.log("content script received ");
@@ -37,8 +39,10 @@ chrome.runtime.onMessage.addListener(async(message, sender, sendResponse) => {
     switch (message.type) {
         case "stop":
             if (audioWorkletNode) audioWorkletNode.port.postMessage(message);
-            sendResponse();
+            if (requestLoop) { clearInterval(requestLoop) }
             currentTab = -1;
+            sendResponse();
+            break;
         case "outputBuffer":
             if (audioWorkletNode) audioWorkletNode.port.postMessage(message);
             sendResponse();
@@ -51,6 +55,7 @@ chrome.runtime.onMessage.addListener(async(message, sender, sendResponse) => {
                 // the payload here is current active tab id
                 chrome.tabs.sendMessage(currentTab, { type: "stop", payload: message.payload });
             }
+            // currentTab = message.payload
             if (audioWorkletNode) {
                 return;
             }
