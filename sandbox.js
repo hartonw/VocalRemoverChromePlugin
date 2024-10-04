@@ -9,9 +9,10 @@ let writeBuffer0 = [];
 let writeBuffer1 = [];
 let source;
 let origin;
+const BUFFER_SIZE_BEFORE_PROCESSING = 3072
+const THRESHOLD_SIZE_TO_PROCESS = 31744
 
 window.addEventListener("message", async(event) => {
-    console.log("sandbox received message")
     if (event.data.type == "buffer") {
         let signal = event.data.payload;
         buffer0 = buffer0.concat(signal[0]);
@@ -24,7 +25,6 @@ window.addEventListener("message", async(event) => {
 
 
 (async function() {
-
     await waitMs(50);
     await tf.setBackend('webgpu');
     window.model = await tf.loadGraphModel("./models/model.json");
@@ -50,28 +50,28 @@ async function waitMs(ms) {
 async function runModel() {
     tf.engine().startScope()
 
-    if (buffer0.length < 31744) {
+    if (buffer0.length < THRESHOLD_SIZE_TO_PROCESS) {
         await waitMs(10);
         return;
     }
 
     let currentLast = totalBufferPointer;
 
-    let originalLeft = buffer0.slice(buffer0.length - 31744, buffer0.length);
-    let originalRight = buffer1.slice(buffer1.length - 31744, buffer1.length);
+    let originalLeft = buffer0.slice(buffer0.length - THRESHOLD_SIZE_TO_PROCESS, buffer0.length);
+    let originalRight = buffer1.slice(buffer1.length - THRESHOLD_SIZE_TO_PROCESS, buffer1.length);
 
 
-    let left = new Array(3072).fill(0).concat(originalLeft).concat(new Array(3072).fill(0));
+    let left = new Array(BUFFER_SIZE_BEFORE_PROCESSING).fill(0).concat(originalLeft).concat(new Array(BUFFER_SIZE_BEFORE_PROCESSING).fill(0));
     let right;
-    if (buffer1.length >= 31744) {
+    if (buffer1.length >= THRESHOLD_SIZE_TO_PROCESS) {
 
-        right = new Array(3072).fill(0).concat(originalRight).concat(new Array(3072).fill(0));
+        right = new Array(BUFFER_SIZE_BEFORE_PROCESSING).fill(0).concat(originalRight).concat(new Array(BUFFER_SIZE_BEFORE_PROCESSING).fill(0));
     } else {
         right = left.concat();
     }
 
-    buffer0.splice(0, buffer0.length - 31744 - 1);
-    buffer1.splice(0, buffer1.length - 31744 - 1);
+    buffer0.splice(0, buffer0.length - THRESHOLD_SIZE_TO_PROCESS - 1);
+    buffer1.splice(0, buffer1.length - THRESHOLD_SIZE_TO_PROCESS - 1);
 
     let inputL = tf.tensor1d(left);
     let inputR = tf.tensor1d(right);

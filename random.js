@@ -1,5 +1,3 @@
-const bufferSize = 1024;
-
 class RandomNoiseProcessor extends AudioWorkletProcessor {
     constructor(options) {
         super();
@@ -21,11 +19,10 @@ class RandomNoiseProcessor extends AudioWorkletProcessor {
                     this.bufferQueue = [];
                     break;
                 case "request":
-                    console.log("received request message from content script")
-                        // Send the buffered audio signal back to content script to be processed
+                    // Send the buffered audio signal back to content script to be processed
                     this.port.postMessage(this.bufferQueue.shift());
                     break;
-                case "buffer":
+                case "outputBuffer":
                     // After the output video is treated by pre-trained model in sandbox.js, it send to service_worker and here
                     this.bufferL = this.bufferL.concat(event.data.payload[0]);
                     this.bufferR = this.bufferR.concat(event.data.payload[1]);
@@ -52,17 +49,16 @@ class RandomNoiseProcessor extends AudioWorkletProcessor {
             }
 
             const target = channel === 0 ? this.bufferL : this.bufferR;
-            if (target && target.length >= bufferSize) {
+            if (target && target.length >= outputData.length) {
                 console.log("buffer work");
-                outputData = target.subarray(0, bufferSize);
-                target.splice(0, bufferSize);
+                outputData = target.subarray(0, outputData.length);
+                target.splice(0, outputData.length);
             } else {
-                console.warn("buffer underflow");
+                // console.warn("buffer underflow");
             }
         }
         return true;
     }
 }
-
 
 registerProcessor("random", RandomNoiseProcessor);

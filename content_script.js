@@ -9,29 +9,16 @@ async function startRequestLoop(tabId) {
     }
     // Set the current tab to the provided tabId
     currentTab = tabId;
-    requestLoop = setInterval(() => audioWorkletNode.port.postMessage({ type: "request" }), 10);
+    requestLoop = setInterval(() => audioWorkletNode.port.postMessage({ type: "request" }));
 
     audioWorkletNode.port.onmessage = (event) => {
         // Relay the buffered audio signal from audio processor to sand box
-        console.log("content script received ");
+
         if (currentTab != tabId) {
             return;
         }
         if (event.data) chrome.runtime.sendMessage({ type: "inputBuffer", payload: [event.data[0], event.data[1]] });
     }
-
-    // while (true) {
-    //     // Create a promise to wait for a response
-    //     audioWorkletNode.port.postMessage({ type: "request" })
-    //     audioWorkletNode.port.onmessage = (event) => {
-    //         // Relay the buffered audio signal from audio processor to sand box
-    //         console.log(event.data);
-    //         if (currentTab != tabId) {
-    //             return;
-    //         }
-    //         if (event.data) chrome.runtime.sendMessage({ type: "inputBuffer", payload: [event.data[0], event.data[1]] });
-    //     }
-    // }
 }
 
 chrome.runtime.onMessage.addListener(async(message, sender, sendResponse) => {
@@ -55,7 +42,9 @@ chrome.runtime.onMessage.addListener(async(message, sender, sendResponse) => {
                 // the payload here is current active tab id
                 chrome.tabs.sendMessage(currentTab, { type: "stop", payload: message.payload });
             }
-            // currentTab = message.payload
+            currentTab = message.payload
+            chrome.runtime.sendMessage({ type: "tab", payload: currentTab });
+
             if (audioWorkletNode) {
                 return;
             }
