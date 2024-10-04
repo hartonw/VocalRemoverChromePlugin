@@ -31,7 +31,7 @@ window.addEventListener("message", async(event) => {
 
     while (true) {
         await runModel();
-        if (source) {
+        if (source && writeBuffer0.length > 0) {
             source.postMessage([writeBuffer0, writeBuffer1], origin);
             writeBuffer0 = [];
             writeBuffer1 = [];
@@ -49,6 +49,7 @@ async function waitMs(ms) {
 
 async function runModel() {
     tf.engine().startScope()
+    console.log(buffer0.length)
 
     if (buffer0.length < THRESHOLD_SIZE_TO_PROCESS) {
         await waitMs(10);
@@ -107,9 +108,9 @@ async function runModel() {
     let signals = await istft(data);
     let elapse = currentLast - writtenPointer;
     let outdata0 = Array.from(signals[0]);
-    outdata0 = outdata0.splice(3072, 31744);
+    outdata0 = outdata0.splice(BUFFER_SIZE_BEFORE_PROCESSING, THRESHOLD_SIZE_TO_PROCESS);
     let outdata1 = Array.from(signals[1]);
-    outdata1 = outdata1.splice(3072, 31744);
+    outdata1 = outdata1.splice(BUFFER_SIZE_BEFORE_PROCESSING, THRESHOLD_SIZE_TO_PROCESS);
 
     if (elapse < outdata0.length) {
         writeBuffer0 = writeBuffer0.concat(outdata0.slice(outdata0.length - elapse, outdata0.length));

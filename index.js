@@ -13,7 +13,7 @@ document.querySelector("#execute").addEventListener("click", () => {
 document.querySelector("#stop").addEventListener("click", () => {
     if (!isStopped) {
         chrome.runtime.sendMessage({ type: "stop", payload: null });
-        chrome.tabs.sendMessage(currentTab, { type: "stop", payload: currentTab });
+        // chrome.tabs.sendMessage(currentTab, { type: "stop", payload: currentTab });
         isStopped = true;
     }
 });

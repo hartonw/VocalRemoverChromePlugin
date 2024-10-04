@@ -9,6 +9,7 @@ async function startRequestLoop(tabId) {
     }
     // Set the current tab to the provided tabId
     currentTab = tabId;
+    chrome.runtime.sendMessage({ type: "tab", payload: currentTab });
     requestLoop = setInterval(() => audioWorkletNode.port.postMessage({ type: "request" }));
 
     audioWorkletNode.port.onmessage = (event) => {
@@ -42,8 +43,6 @@ chrome.runtime.onMessage.addListener(async(message, sender, sendResponse) => {
                 // the payload here is current active tab id
                 chrome.tabs.sendMessage(currentTab, { type: "stop", payload: message.payload });
             }
-            currentTab = message.payload
-            chrome.runtime.sendMessage({ type: "tab", payload: currentTab });
 
             if (audioWorkletNode) {
                 return;
