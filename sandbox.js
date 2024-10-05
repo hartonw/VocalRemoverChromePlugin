@@ -9,11 +9,15 @@ let writeBuffer0 = [];
 let writeBuffer1 = [];
 let source;
 let origin;
-const BUFFER_SIZE_BEFORE_PROCESSING = 3072
-const THRESHOLD_SIZE_TO_PROCESS = 31744
+const BUFFER_SIZE_FROM_AUDIO_PROCESSOR = 1024
+const BUFFER_SIZE_BEFORE_PROCESSING = BUFFER_SIZE_FROM_AUDIO_PROCESSOR * 1
+const THRESHOLD_SIZE_TO_PROCESS = 6144
+    // BUFFER_SIZE_FROM_AUDIO_PROCESSOR * 5
+const FRAME_LENGTH_FOR_STFT = BUFFER_SIZE_FROM_AUDIO_PROCESSOR * 2
+
 
 window.addEventListener("message", async(event) => {
-    if (event.data.type == "buffer") {
+    if (event.data.type == "preProcessedSound") {
         let signal = event.data.payload;
         buffer0 = buffer0.concat(signal[0]);
         buffer1 = buffer1.concat(signal[1]);
@@ -134,12 +138,12 @@ async function runModel() {
 async function istft(x) {
 
     const n = 6144 / 2 + 1;
-    const f_pad = tf.zeros([1, 4, 1, 32]);
+    const f_pad = tf.zeros([1, 4, 1, 6]);
     let x1 = tf.concat([x, f_pad], x.shape.length - 2);
     f_pad.dispose();
-    let x2 = x1.reshape([1, 2, 2, 3073, 32])
+    let x2 = x1.reshape([1, 2, 2, BUFFER_SIZE_BEFORE_PROCESSING + 1, 6])
     x1.dispose();
-    let x3 = x2.reshape([-1, 2, n, 32]);
+    let x3 = x2.reshape([-1, 2, n, 6]);
     x2.dispose();
     let x4 = x3.transpose([0, 2, 3, 1]);
     x3.dispose();
@@ -149,7 +153,7 @@ async function istft(x) {
     let l2 = tf.squeeze(l, [0]);
     let r = splitTensors[1];
     let r2 = tf.squeeze(r, [0]);
-    let result = await getIstftLR(l2, r2, 6144, 1024, createHannWindow);
+    let result = await getIstftLR(l2, r2, FRAME_LENGTH_FOR_STFT, BUFFER_SIZE_FROM_AUDIO_PROCESSOR, createHannWindow);
 
     l.dispose();
     l2.dispose();
@@ -162,13 +166,18 @@ async function istft(x) {
 
 
 function getStft(input) {
-
     return tf.tidy(() => {
         let res = tf.signal.stft(input, 6144, 1024, 6144, createHannWindow);
         let real = tf.real(res);
         let imag = tf.imag(res);
         real = tf.slice(real, [0, 0], [32, 3072]);
         imag = tf.slice(imag, [0, 0], [32, 3072]);
+        // let res = tf.signal.stft(input, FRAME_LENGTH_FOR_STFT, BUFFER_SIZE_FROM_AUDIO_PROCESSOR, window_fn = createHannWindow);
+        // // let res = tf.signal.stft(input, FRAME_LENGTH_FOR_STFT, BUFFER_SIZE_FROM_AUDIO_PROCESSOR, FRAME_LENGTH_FOR_STFT, createHannWindow);
+        // let real = tf.real(res);
+        // let imag = tf.imag(res);
+        // real = tf.slice(real, [0, 0], [6, BUFFER_SIZE_BEFORE_PROCESSING]);
+        // imag = tf.slice(imag, [0, 0], [6, BUFFER_SIZE_BEFORE_PROCESSING]);
         real = real.transpose();
         imag = imag.transpose();
         let output = tf.stack([real, imag], 0);

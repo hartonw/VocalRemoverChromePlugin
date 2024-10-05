@@ -10,15 +10,11 @@ async function startRequestLoop(tabId) {
     // Set the current tab to the provided tabId
     currentTab = tabId;
     chrome.runtime.sendMessage({ type: "tab", payload: currentTab });
-    requestLoop = setInterval(() => audioWorkletNode.port.postMessage({ type: "request" }));
+    requestLoop = setInterval(() => audioWorkletNode.port.postMessage({ type: "getAudioSignal" }));
 
     audioWorkletNode.port.onmessage = (event) => {
         // Relay the buffered audio signal from audio processor to sand box
-
-        if (currentTab != tabId) {
-            return;
-        }
-        if (event.data) chrome.runtime.sendMessage({ type: "inputBuffer", payload: [event.data[0], event.data[1]] });
+        if (currentTab == tabId && event.data) chrome.runtime.sendMessage({ type: "preProcessedSound", payload: [event.data[0], event.data[1]] });
     }
 }
 
@@ -31,7 +27,7 @@ chrome.runtime.onMessage.addListener(async(message, sender, sendResponse) => {
             currentTab = -1;
             sendResponse();
             break;
-        case "outputBuffer":
+        case "processedSounds":
             if (audioWorkletNode) audioWorkletNode.port.postMessage(message);
             sendResponse();
             break;

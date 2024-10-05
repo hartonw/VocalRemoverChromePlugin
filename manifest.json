@@ -20,7 +20,7 @@
         ]
     }],
     "permissions": [
-        "offscreen", "tabs"
+        "offscreen"
     ],
     "content_security_policy": {
         "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-eval';"

@@ -11,7 +11,7 @@ chrome.runtime.onMessage.addListener((message) => {
     if (message.type == "tab") {
         currentTab = message.payload
     }
-    if (message.type == "outputBuffer") {
+    if (message.type == "processedSounds") {
         chrome.tabs.sendMessage(currentTab, { type: "outputBuffer", payload: message.payload })
     }
     if (message.type == "stop") {
