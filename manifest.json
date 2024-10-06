@@ -4,7 +4,7 @@
     "version": "0.1",
     "manifest_version": 3,
     "web_accessible_resources": [{
-        "resources": ["random.js"],
+        "resources": ["ring-buffer-worklet-processor.js"],
         "matches": ["<all_urls>"]
     }],
     "content_scripts": [{

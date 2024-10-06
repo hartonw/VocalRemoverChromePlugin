@@ -1,4 +1,4 @@
-class RandomNoiseProcessor extends AudioWorkletProcessor {
+class RingBufferWorkletProcessor extends AudioWorkletProcessor {
     constructor(options) {
         super();
         this.numberOfInputs = options.numberOfInputs;
@@ -71,4 +71,4 @@ class RandomNoiseProcessor extends AudioWorkletProcessor {
     }
 }
 
-registerProcessor("random", RandomNoiseProcessor);
+registerProcessor("ring-buffer-worklet-processor", RingBufferWorkletProcessor);

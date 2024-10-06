@@ -51,12 +51,12 @@ chrome.runtime.onMessage.addListener(async(message, sender, sendResponse) => {
             const source = audioContext.createMediaElementSource(video);
 
             // Create Audio Worklet node to process the audio
-            const processorURL = chrome.runtime.getURL('random.js');
+            const processorURL = chrome.runtime.getURL('ring-buffer-worklet-processor.js');
             audioContext.sampleRate = 44100;
             await audioContext.audioWorklet.addModule(processorURL);
             audioWorkletNode = new AudioWorkletNode(
                 audioContext,
-                "random"
+                "ring-buffer-worklet-processor"
             );
 
             // Connect the web audio api's audio source with the audio processing node
