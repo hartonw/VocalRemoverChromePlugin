@@ -51,23 +51,36 @@ class RingBufferWorkletProcessor extends AudioWorkletProcessor {
             //         this.internalBuffer[inputIndex][1].push(input[1])
             //     }
             // })
-
-        outputs.forEach((output) => {
+            // if (this.isStopped) {
+            //     outputs = inputs;
+            // } else {
+            //     const output = outputs[0];
+            //     if (this.processedSound && this.processedSound[0].length >= output[0].length) {
+            //         output[0] = this.processedSound[0].splice(0, output[0].length);
+            //         output[1] = this.processedSound[1].splice(0, output[1].length);
+            //         console.log(`after modify ${outputs[0][0]}`);
+            //     }
+            // }
+        outputs.forEach((output, outputIndex) => {
             output.forEach((channelOutputData, channelIndex) => {
                 if (this.isStopped) {
                     outputs = inputs;
                 } else {
                     if (this.processedSound && this.processedSound[channelIndex].length >= channelOutputData.length) {
-                        console.log(`before modify ${channelOutputData[0]}`);
-                        channelOutputData = this.processedSound[channelIndex].splice(0, channelOutputData.length);
-                        console.log(`after modify ${channelOutputData[0]}`);
+                        for (let i = 0; i < channelOutputData.length; i++) {
+                            channelOutputData[i] = this.processedSound[channelIndex][i]
+                        }
+                        this.processedSound[channelIndex].splice(0, channelOutputData.length);
+                        // console.log(`after modify ${channelOutputData[0]}`);
+                        console.log(`after modify ${outputs[0][0]}`);
 
                     } else {
-                        // console.warn("buffer underflow");
+                        console.warn("buffer underflow");
                     }
                 }
             });
         })
+
         return true;
     }
 }
