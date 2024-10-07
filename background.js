@@ -9,7 +9,7 @@ chrome.runtime.onMessage.addListener((message) => {
     if (message.type == "preProcessedSound") {
         // send message to sandbox.
         console.log("sending message to sandbox")
-        document.getElementById("sandbox").contentWindow.postMessage({ type: "preProcessedSound", payload: [message.payload[0], message.payload[1]] }, "*");
+        document.getElementById("sandbox").contentWindow.postMessage({ type: "preProcessedSound", payload: message.payload }, "*");
     } else if (message.type == "stop") {
         location.reload();
     }

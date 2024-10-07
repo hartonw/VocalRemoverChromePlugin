@@ -14,7 +14,9 @@ async function startRequestLoop(tabId) {
 
     audioWorkletNode.port.onmessage = (event) => {
         // Relay the buffered audio signal from audio processor to sand box
-        if (currentTab == tabId && event.data) chrome.runtime.sendMessage({ type: "preProcessedSound", payload: [event.data[0], event.data[1]] });
+        if (currentTab == tabId && event.data && event.data.length > 0) {
+            chrome.runtime.sendMessage({ type: "preProcessedSound", payload: event.data });
+        }
     }
 }
 
