@@ -61,7 +61,7 @@ class RingBufferWorkletProcessor extends AudioWorkletProcessor {
             //         console.log(`after modify ${outputs[0][0]}`);
             //     }
             // }
-        outputs.forEach((output, outputIndex) => {
+        outputs.forEach((output) => {
             output.forEach((channelOutputData, channelIndex) => {
                 if (this.isStopped) {
                     outputs = inputs;
