@@ -1,42 +1,45 @@
 # VocalRemoverWebExtension
 
 ## 概要
-再生中のWeb動画からリアルタイムで音声のボーカルパートを除去できるChrome Extensionである。
-[Tensorflow.js](https://github.com/tensorflow/tfjs)のWebGPUバックエンドを利用して推論を行っている。
+This is a Chrome Extension that can remove vocal parts from web videos in real time while they are being played. It performs inference using the WebGPU backend of 
+[Tensorflow.js](https://github.com/tensorflow/tfjs)
 
-## 利用上の注意
-- 本拡張機能はWebGPUバックエンドを必要としますので、対応しているChrome113以降のバージョンで使用してください。
-- GPUの性能が低い場合は正常に作動しない可能性があります。
-- 複数の動画もしくは複数のブラウザタブで同時に使用することはできません。
-- 本拡張機能は基本的に私的な利用を想定していますが、本拡張機能を利用して得られた伴奏のみの音源そのもの、もしくは加工したものを公衆に対して送信する場合は、必ず権利者の許可を得るようにしてください。
+## Usage notes
+* This extension requires a WebGPU backend, so please use it with a compatible version of Chrome 113 or later.
+* If your GPU performance is low, it may not work properly.
+* It cannot be used in multiple videos or multiple browser tabs at the same time.
+* This extension is basically intended for private use, but if you wish to remove vocal of any online audio source using this extension, you should obtain permission from the copyright holder.
 
-## 既知の問題
-### [createScriptProcessor](https://developer.mozilla.org/ja/docs/Web/API/BaseAudioContext/createScriptProcessor)を使用している
-ContentScript側で、createScriptProcessorを使用しているが、このAPIは非推奨である上UIと同じスレッドで動作するのでスクロールなどのUI操作時に音声が乱れたりする問題が起きている。
-現状拡張機能からAudioWorkletを立ち上げる方法がないので、ブラウザ側の対応を待つしかない。
+## Known Issue
+### Noise is being picked up
+We have confirmed that even if a PCM sound source with all 0s is input, when inference is performed with the model, the results returned are noisy. This may be causing problems when converting the model, but we will investigate this further.
 
-### コード内部のマジックナンバーが多い
-申し訳ない。動くことを第一優先にPythonのコードをベースに移植したので定数定義が雑になっている箇所が多い。今後直す
+## Future Outlook
+* In the future, in addition to solving the problems mentioned above, we are considering implementing the following features
+1. Adjust the ratio of vocals to be removed
+1. Adjust the key/pitch of the audio source
+1. Able to extract different instrument track in the audio
 
-### ノイズが乗ってしまう
-全て0のPCM音源を入力させても、モデルで推論を行うとノイズが乗った結果が返ってくる状況を確認している。モデルを変換する上で問題を起こしている可能性があるが今後調査する。
-
-## 今後の展望
-今後は、前述の問題の解決に加えて、ボーカルと伴奏の割合を自由に調整できるようにする機能などの実装を考えている。
 
 ## 使い方
-このリポジトリは基本的に開発者向けであるが、利用者の方がダウンロードしてブラウザで使いたい場合は、以下の手順で導入する。
-- 緑の「Code」ボタンから「Download ZIP」を選択し、解凍する
-- Chromeで、 chrome://extensions/ にアクセスする
-- 右上の デベロッパー モード をオンにする
-- パッケージ化されていない拡張機能を読み込む をクリックする
-- 解凍した後のフォルダを選択する
+This repository is primarily intended for developers, but if users want to download it and use it in their browsers, they can follow the steps below to install it.
+
+1. Select "Download ZIP" from the green "Code" button and unzip it.
+1. In Chrome, go to chrome://extensions/
+1. Turn on Developer mode in the top right
+1. Click Load unpackaged extension
+1. Select the folder to unzip
+
 
 ## Credits
 ### Anjok07, Aufr33
-モデルは、[MITライセンス](https://github.com/Anjok07/ultimatevocalremovergui/blob/v5.2.0/LICENSE)に基づき、[Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui)の「UVR-MDX-NET-Inst_HQ_3」を使用しています。
+The model uses "UVR-MDX-NET-Inst_HQ_3" from [Ultimate Vocal Remover](https://github.com/Anjok07/ultimatevocalremovergui) under the [MIT license]((https://github.com/Anjok07/ultimatevocalremovergui/blob/v5.2.0/LICENSE)) .
+
 ### Tendorflow
-[Apache-2.0 license](https://github.com/tensorflow/tfjs/blob/master/LICENSE)に基づき、[Tensorflow.js](https://github.com/tensorflow/tfjs)を使用しています。
+It is licensed under the [Apache-2.0 license](https://github.com/tensorflow/tfjs/blob/master/LICENSE) and uses [Tensorflow.js](https://github.com/tensorflow/tfjs) .
+
+### wakapippi
+First version of this vocal remover: [VocalRemoverWebExtension](https://github.com/wakapippi/VocalRemoverWebExtension/tree/master)
 
 ## References
 [Takahashi et al., "Multi-scale Multi-band DenseNets for Audio Source Separation"](https://arxiv.org/pdf/1706.09588.pdf)
