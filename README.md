@@ -1,6 +1,6 @@
 # VocalRemoverWebExtension
 
-## 概要
+## Overview
 This is a Chrome Extension that can remove vocal parts from web videos in real time while they are being played. It performs inference using the WebGPU backend of 
 [Tensorflow.js](https://github.com/tensorflow/tfjs)
 
@@ -9,6 +9,14 @@ This is a Chrome Extension that can remove vocal parts from web videos in real t
 * If your GPU performance is low, it may not work properly.
 * It cannot be used in multiple videos or multiple browser tabs at the same time.
 * This extension is basically intended for private use, but if you wish to remove vocal of any online audio source using this extension, you should obtain permission from the copyright holder.
+* This repository is primarily intended for developers, but if users want to download it and use it in their browsers, they can follow the steps below to install it.
+
+1. Select "Download ZIP" from the green "Code" button and unzip it.
+1. In Chrome, go to chrome://extensions/
+1. Turn on Developer mode in the top right
+1. Click Load unpackaged extension
+1. Select the folder to unzip
+
 
 ## Known Issue
 ### Noise is being picked up
@@ -19,16 +27,6 @@ We have confirmed that even if a PCM sound source with all 0s is input, when inf
 1. Adjust the ratio of vocals to be removed
 1. Adjust the key/pitch of the audio source
 1. Able to extract different instrument track in the audio
-
-
-## 使い方
-This repository is primarily intended for developers, but if users want to download it and use it in their browsers, they can follow the steps below to install it.
-
-1. Select "Download ZIP" from the green "Code" button and unzip it.
-1. In Chrome, go to chrome://extensions/
-1. Turn on Developer mode in the top right
-1. Click Load unpackaged extension
-1. Select the folder to unzip
 
 
 ## Credits
