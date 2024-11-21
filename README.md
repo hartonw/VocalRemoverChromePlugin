@@ -9,8 +9,9 @@ This is a Chrome Extension that can remove vocal parts from web videos in real t
 * If your GPU performance is low, it may not work properly.
 * It cannot be used in multiple videos or multiple browser tabs at the same time.
 * This extension is basically intended for private use, but if you wish to remove vocal of any online audio source using this extension, you should obtain permission from the copyright holder.
-* This repository is primarily intended for developers, but if users want to download it and use it in their browsers, they can follow the steps below to install it.
 
+## Installation
+* This repository is primarily intended for developers, but if users want to download it and use it in their browsers, they can follow the steps below to install it.
 1. Select "Download ZIP" from the green "Code" button and unzip it.
 1. In Chrome, go to chrome://extensions/
 1. Turn on Developer mode in the top right
